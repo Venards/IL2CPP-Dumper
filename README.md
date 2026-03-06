@@ -5,7 +5,7 @@ This fork is personalized to my liking
 
 -- Update log (DD/MM/YY)
 
-V1.1 - 03/07/26 - 5:30 am
+V1.0 release - 03/07/26 - 5:30 am
  - [+] Added Relative Virtual Address
      - IDA Pro and Ghidra Support
  - [+] Added Field Offset Recovery
