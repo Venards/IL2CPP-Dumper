@@ -1,0 +1,10 @@
+﻿  dumper.cxx
+  il2cpp_api.cxx
+  il2cpp_class.cxx
+  il2cpp_image.cxx
+  main.cxx
+  utils.cxx
+  Generating Code...
+  Dump.vcxproj -> C:\Users\pierl\Desktop\IL2CPP-Dumper-main\x64\Debug\Dump.dll
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.
