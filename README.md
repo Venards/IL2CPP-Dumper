@@ -1,5 +1,6 @@
+Original repo: https://github.com/DeftSolutions-dev/IL2CPP-Dumper
 Forked by @wg5h on discord.
-This fork is personalized to my liking
+
 ## BEWARE THIS IS STILL IN IT'S TESTING PERIOD. EXPECT BUGS!
 
 
