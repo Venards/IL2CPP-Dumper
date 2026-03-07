@@ -1,50 +1,35 @@
-# IL2CPP Dumper for Arknights: Endfield & Unity Games
+# IL2CPP Dumper — Arknights: Endfield & Unity Games
 
-Simple injectable DLL that dumps IL2CPP metadata from Unity games (classes, fields, methods, namespaces, interfaces, etc.).
+Simple injectable DLL that dumps IL2CPP metadata from Unity games.
+
+> Fork of [DeftSolutions-dev/IL2CPP-Dumper](https://github.com/DeftSolutions-dev/IL2CPP-Dumper)
+
+---
 
 ### Features
+- Dumps every assembly from `GameAssembly.dll`
+- Full metadata recovery — classes, fields, methods, namespaces, interfaces, enums, nested types
+- Field offsets, RVAs, access modifiers, inheritance, generics
+- Two output formats:
+  - **C# style** — readable `.cs` files with proper syntax
+  - **AI-friendly** — structured plain text for LLMs and automated tooling
+- Press **INSERT** to dump
 
-1. Dumps every assembly from `GameAssembly.dll`
-
-2. Recovers full metadata including:
-
-   * `Classes`, `Fields`, `Methods`, `Namespaces`, `Interfaces`
-
-3. Advanced metadata recovery:
-
-   * Field Offset Recovery
-   * Relative Virtual Address (RVA)
-   * Global String Discovery
-   * Namespace Grouping
-
-4. Two output formats:
-
-   * **Classic C# style** – readable `.cs` files with proper syntax, access modifiers, inheritance, and interfaces
-   * **AI-friendly format** – structured plain text designed for LLMs, parsing, and automated tooling
-
-5. Simple activation system:
-
-   * Inject the DLL
-   * Press **INSERT** to start dumping
+### What's New (v1.2.0)
+- SEH-safe memory reads — bad pointers no longer crash the dumper
+- IDA-style pattern scanner with Boyer-Moore-Horspool — faster, works on stripped exports
+- Function resolver — falls back to pattern scan if exports are missing
+- RVA calculator with file offset lookup for IDA/Ghidra workflows
+- Resolve report printed at startup showing how each function was found
 
 ### Output
+| Path | Contents |
+|------|----------|
+| `C:\IL2CPP_Dump_Normal\` | C# style `.cs` files |
+| `C:\IL2CPP_Dump_AI\` | AI-friendly `.txt` files |
+| `C:\IL2CPPDump_Log.txt` | Session log + resolve report |
 
-* Normal dumps -> `C:\IL2CPP_Dump_Normal\`
-* AI dumps -> `C:\IL2CPP_Dump_AI\`
-* Log file -> `C:\IL2CPPDump_Log.txt`
-
-### Supported IL2CPP Versions
-
-* IL2CPP metadata `≈27–29`
-* Unity `2021.3` – `2023.x` – `2024.x` builds
-
-### Update Log (DD/MM/YY)
-
-**V1.0 release – 03/07/26 – 5:30 AM**
-
-* Added Relative Virtual Address (RVA)
-* Added Field Offset Recovery
-* Added Global String Discovery
-* Added Namespace Grouping to mimic original source structure
-
-> This is a fork from [DeftSolutions-dev/IL2CPP-Dumper](https://github.com/DeftSolutions-dev/IL2CPP-Dumper)
+### Supported
+- IL2CPP metadata `≈27–29`
+- Unity `2021.3` → `2024.x`
+- x64 only
