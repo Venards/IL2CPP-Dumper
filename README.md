@@ -1,4 +1,4 @@
-# IL2CPP Dumper — Arknights: Endfield & Unity Games
+# IL2CPP Dumper — Unity Games
 
 Simple injectable DLL that dumps IL2CPP metadata from Unity games.
 
