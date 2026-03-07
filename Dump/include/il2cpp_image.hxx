@@ -3,17 +3,18 @@
 
 #include <cstddef>
 #include "il2cpp_class.hxx"
+#include "il2cpp_api.hxx"
 
 class Il2CppImage {
 
 public:
-    void * image = nullptr;
+    Il2CppImageOpaque * image = nullptr;
 
-    explicit Il2CppImage( void * img = nullptr ): image( img ) { }
+    explicit Il2CppImage( Il2CppImageOpaque * img = nullptr ) : image( img ) { }
 
-    const char * GetName( ) const;
-    size_t GetClassCount( ) const;
-    Il2CppClass GetClassByIndex( size_t index ) const;
+    const char *  GetName( )               const;
+    size_t        GetClassCount( )         const;
+    Il2CppClass   GetClassByIndex( size_t index ) const;
 
 };
 

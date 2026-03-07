@@ -3,38 +3,55 @@
 
 #include <vector>
 #include <string>
-#include <tuple>
+#include <cstdint>
 #include "il2cpp_api.hxx"
 
 class Il2CppClass {
 
 public:
-    void * klass = nullptr;
+    Il2CppClassOpaque * klass = nullptr;
 
-    explicit Il2CppClass( void * k = nullptr ): klass( k ) { }
+    explicit Il2CppClass( Il2CppClassOpaque * k = nullptr ) : klass( k ) { }
 
-    const char * GetName( ) const;
+    const char * GetName( )      const;
     const char * GetNamespace( ) const;
 
-    bool IsValueType( ) const;
-    bool IsInterface( ) const;
+    bool IsValueType( )  const;
+    bool IsInterface( )  const;
+    bool IsEnum( )       const;
 
-    uint32_t GetFlags( ) const;
+    uint32_t GetFlags( )     const;
     uint32_t GetTypeToken( ) const;
 
-    Il2CppClass GetParent( ) const;
+    Il2CppClass              GetParent( )     const;
     std::vector<Il2CppClass> GetInterfaces( ) const;
+    std::vector<Il2CppClass> GetNestedTypes( ) const;
 
 
-    using FieldInfo = std::tuple<uint32_t, std::string, std::string, int32_t>;
-    std::vector<FieldInfo> GetFields( ) const;
+    // ---- Strongly-typed info structs (replaces fragile tuples) ----
 
+    struct FieldInfo {
+        uint32_t    flags;
+        std::string typeName;
+        std::string name;
+        int32_t     offset;
+    };
 
-    using ParamInfo = std::pair<std::string, std::string>;
-    using MethodInfo = std::tuple<uint32_t, std::string, std::string, std::vector<ParamInfo>, uintptr_t>;
+    struct ParamInfo {
+        std::string typeName;
+        std::string name;
+    };
+
+    struct MethodInfo {
+        uint32_t               flags;
+        std::string            returnType;
+        std::string            name;
+        uintptr_t              rva;        // in-memory function address (0 if unavailable)
+        std::vector<ParamInfo> params;
+    };
+
+    std::vector<FieldInfo>  GetFields( )  const;
     std::vector<MethodInfo> GetMethods( ) const;
-
-
 
 };
 

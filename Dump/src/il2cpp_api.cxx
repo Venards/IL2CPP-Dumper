@@ -1,114 +1,238 @@
 #include "../include/il2cpp_api.hxx"
 #include "../include/utils.hxx"
+#include "../include/scanner.hxx"
+#include "../include/rva.hxx"
 #include <windows.h>
-
+#include <iomanip>
+#include <sstream>
+#include <vector>
 
 namespace api {
 
     bool initialized = false;
 
-    // function pointers
-    get_domain_t get_domain = nullptr;
-    get_assemblies_t get_assemblies = nullptr;
-    assembly_get_image_t assembly_get_image = nullptr;
-    image_get_name_t image_get_name = nullptr;
-
-    image_get_class_count_t image_get_class_count = nullptr;
-    image_get_class_t image_get_class = nullptr;
-
-    class_get_name_t class_get_name = nullptr;
-    class_get_namespace_t class_get_namespace = nullptr;
-    class_get_flags_t class_get_flags = nullptr;
-    class_get_parent_t class_get_parent = nullptr;
-    class_is_valuetype_t class_is_valuetype = nullptr;
-    class_is_interface_t class_is_interface = nullptr;
-    class_get_interfaces_t class_get_interfaces = nullptr;
-
-    class_num_fields_t class_num_fields = nullptr;
-    class_get_fields_t class_get_fields = nullptr;
-    field_get_name_t field_get_name = nullptr;
-    field_get_type_t field_get_type = nullptr;
-    field_get_flags_t field_get_flags = nullptr;
-    field_get_offset_t field_get_offset = nullptr;
-
-    class_get_methods_t class_get_methods = nullptr;
-    method_get_name_t method_get_name = nullptr;
-    method_get_flags_t method_get_flags = nullptr;
-    method_get_param_count_t method_get_param_count = nullptr;
-    method_get_param_t method_get_param = nullptr;
-    method_get_param_name_t method_get_param_name = nullptr;
-    method_get_return_type_t method_get_return_type = nullptr;
-    method_get_pointer_t method_get_pointer = nullptr;
-
-    type_get_name_t type_get_name = nullptr;
-    class_get_type_token_t class_get_type_token = nullptr;
-
-    metadata_string_literal_from_index_t metadata_string_literal_from_index = nullptr;
+    // ---- Function pointer instances ----
+    get_domain_t                    get_domain               = nullptr;
+    get_assemblies_t                get_assemblies           = nullptr;
+    assembly_get_image_t            assembly_get_image       = nullptr;
+    image_get_name_t                image_get_name           = nullptr;
+    image_get_class_count_t         image_get_class_count    = nullptr;
+    image_get_class_t               image_get_class          = nullptr;
+    class_get_name_t                class_get_name           = nullptr;
+    class_get_namespace_t           class_get_namespace      = nullptr;
+    class_get_flags_t               class_get_flags          = nullptr;
+    class_get_parent_t              class_get_parent         = nullptr;
+    class_is_valuetype_t            class_is_valuetype       = nullptr;
+    class_is_interface_t            class_is_interface       = nullptr;
+    class_is_enum_t                 class_is_enum            = nullptr;
+    class_get_interfaces_t          class_get_interfaces     = nullptr;
+    class_get_nested_types_t        class_get_nested_types   = nullptr;
+    class_num_fields_t              class_num_fields         = nullptr;
+    class_get_fields_t              class_get_fields         = nullptr;
+    field_get_name_t                field_get_name           = nullptr;
+    field_get_type_t                field_get_type           = nullptr;
+    field_get_flags_t               field_get_flags          = nullptr;
+    field_get_offset_t              field_get_offset         = nullptr;
+    class_get_methods_t             class_get_methods        = nullptr;
+    method_get_name_t               method_get_name          = nullptr;
+    method_get_flags_t              method_get_flags         = nullptr;
+    method_get_param_count_t        method_get_param_count   = nullptr;
+    method_get_param_t              method_get_param         = nullptr;
+    method_get_param_name_t         method_get_param_name    = nullptr;
+    method_get_return_type_t        method_get_return_type   = nullptr;
+    method_get_function_pointer_t   method_get_function_pointer = nullptr;
+    type_get_name_t                 type_get_name            = nullptr;
+    class_get_type_token_t          class_get_type_token     = nullptr;
 
 
-    void api::init() {
-        if (initialized) return;
-
-        HMODULE gameAsm = GetModuleHandleA("GameAssembly.dll");
-        if (!gameAsm) {
-            Log("GameAssembly.dll not found.");
-            return;
+    const char * ResolveName( ResolveMethod m ) {
+        switch ( m ) {
+            case ResolveMethod::Export:  return "Export";
+            case ResolveMethod::Pattern: return "Pattern";
+            default:                     return "None";
         }
-
-        #define RESOLVE_API(name, target) \
-            target = (target##_t)GetProcAddress(gameAsm, name); \
-            if (!target) Log("[WARN] Could not resolve: " + std::string(name));
-
-        // Core functions - fail early if missing
-        RESOLVE_API("il2cpp_domain_get", get_domain);
-        RESOLVE_API("il2cpp_domain_get_assemblies", get_assemblies);
-        RESOLVE_API("il2cpp_assembly_get_image", assembly_get_image);
-        RESOLVE_API("il2cpp_image_get_name", image_get_name);
-
-        // class / image enumeration
-        RESOLVE_API("il2cpp_image_get_class_count", image_get_class_count);
-        RESOLVE_API("il2cpp_image_get_class", image_get_class);
-
-        // class reflection
-        RESOLVE_API("il2cpp_class_get_name", class_get_name);
-        RESOLVE_API("il2cpp_class_get_namespace", class_get_namespace);
-        RESOLVE_API("il2cpp_class_get_flags", class_get_flags);
-        RESOLVE_API("il2cpp_class_get_parent", class_get_parent);
-
-        RESOLVE_API("il2cpp_class_is_valuetype", class_is_valuetype);
-        RESOLVE_API("il2cpp_class_is_interface", class_is_interface);
-        RESOLVE_API("il2cpp_class_get_interfaces", class_get_interfaces);
-
-        // fields
-        RESOLVE_API("il2cpp_class_num_fields", class_num_fields);
-        RESOLVE_API("il2cpp_class_get_fields", class_get_fields);
-        RESOLVE_API("il2cpp_field_get_name", field_get_name);
-        RESOLVE_API("il2cpp_field_get_type", field_get_type);
-        RESOLVE_API("il2cpp_field_get_flags", field_get_flags);
-        RESOLVE_API("il2cpp_field_get_offset", field_get_offset);
-
-        // methods
-        RESOLVE_API("il2cpp_class_get_methods", class_get_methods);
-        RESOLVE_API("il2cpp_method_get_name", method_get_name);
-        RESOLVE_API("il2cpp_method_get_flags", method_get_flags);
-        RESOLVE_API("il2cpp_method_get_param_count", method_get_param_count);
-        RESOLVE_API("il2cpp_method_get_param", method_get_param);
-        RESOLVE_API("il2cpp_method_get_param_name", method_get_param_name);
-        RESOLVE_API("il2cpp_method_get_return_type", method_get_return_type);
-        RESOLVE_API("il2cpp_method_get_pointer", method_get_pointer);
-
-        RESOLVE_API("il2cpp_type_get_name", type_get_name);
-        RESOLVE_API("il2cpp_class_get_type_token", class_get_type_token);
-        RESOLVE_API("il2cpp_metadata_string_literal_from_index", metadata_string_literal_from_index);
-
-
-        if ( !get_domain || !get_assemblies || !assembly_get_image || !image_get_name ) {
-            Log( "[ERROR] Failed to resolve core IL2CPP functions" );
-            return;
-        }
-
-        initialized = (get_domain != nullptr);
-        if (initialized) Log("[OK] IL2CPP API Initialized");
     }
 
-}
+
+    //  Internal resolve tracking for the report
+    struct FuncEntry {
+        const char *  exportName;
+        void **       fnPtr;
+        const char *  pattern;
+        ResolveMethod how;
+    };
+
+    static std::vector<FuncEntry> s_registry;
+
+
+
+    //  Resolve — tries Export then Pattern scan
+    static void Resolve(
+        HMODULE      hMod,
+        const char * exportName,
+        void **      fnPtr,
+        const char * pattern,
+        bool         required
+    ) {
+        FuncEntry entry{ exportName, fnPtr, pattern, ResolveMethod::None };
+
+        // Export table
+        void * addr = reinterpret_cast<void *>( GetProcAddress( hMod, exportName ) );
+        if ( addr ) {
+            *fnPtr    = addr;
+            entry.how = ResolveMethod::Export;
+            s_registry.push_back( entry );
+            return;
+        }
+
+        // Pattern scan
+        if ( pattern ) {
+            auto match = scanner::FindPattern( "GameAssembly.dll", pattern );
+            if ( match ) {
+                *fnPtr    = reinterpret_cast<void *>( *match );
+                entry.how = ResolveMethod::Pattern;
+                s_registry.push_back( entry );
+                return;
+            }
+        }
+
+        // Not resolved
+        s_registry.push_back( entry );
+
+        if ( required ) {
+            Log( std::string( "[ERROR] Required function not resolved: " ) + exportName );
+        } else {
+            Log( std::string( "[WARN]  Optional function not resolved: " ) + exportName );
+        }
+    }
+
+
+    //  init
+    void init( ) {
+        if ( initialized ) return;
+
+        // Poll for GameAssembly.dll — no arbitrary Sleep()
+        HMODULE hMod = nullptr;
+        for ( int i = 0; i < 200 && !hMod; ++i ) {
+            hMod = GetModuleHandleA( "GameAssembly.dll" );
+            if ( !hMod ) Sleep( 50 );
+        }
+
+        if ( !hMod ) {
+            Log( "[ERROR] GameAssembly.dll not found after 10s" );
+            return;
+        }
+
+        {
+            std::ostringstream ss;
+            ss << "[OK] GameAssembly.dll @ 0x"
+               << std::hex << std::uppercase << reinterpret_cast<uintptr_t>( hMod );
+            Log( ss.str( ) );
+        }
+
+        s_registry.clear( );
+        s_registry.reserve( 32 );
+
+
+        Resolve( hMod, "il2cpp_domain_get",
+            reinterpret_cast<void**>( &get_domain ),
+            "48 83 EC 28 48 8B 05 ? ? ? ? 48 85 C0",
+            true );
+
+        Resolve( hMod, "il2cpp_domain_get_assemblies",
+            reinterpret_cast<void**>( &get_assemblies ),
+            "48 89 5C 24 ? 57 48 83 EC 20 48 8B D9 48 8B FA",
+            true );
+
+        Resolve( hMod, "il2cpp_assembly_get_image",
+            reinterpret_cast<void**>( &assembly_get_image ),
+            "48 8B 41 ? C3",
+            true );
+
+        Resolve( hMod, "il2cpp_image_get_name",
+            reinterpret_cast<void**>( &image_get_name ),
+            nullptr, true );
+
+        Resolve( hMod, "il2cpp_image_get_class_count",
+            reinterpret_cast<void**>( &image_get_class_count ),
+            nullptr, true );
+
+        Resolve( hMod, "il2cpp_image_get_class",
+            reinterpret_cast<void**>( &image_get_class ),
+            nullptr, true );
+
+        // ---- Class reflection ----
+        Resolve( hMod, "il2cpp_class_get_name",         reinterpret_cast<void**>( &class_get_name ),        nullptr, false );
+        Resolve( hMod, "il2cpp_class_get_namespace",    reinterpret_cast<void**>( &class_get_namespace ),   nullptr, false );
+        Resolve( hMod, "il2cpp_class_get_flags",        reinterpret_cast<void**>( &class_get_flags ),       nullptr, false );
+        Resolve( hMod, "il2cpp_class_get_parent",       reinterpret_cast<void**>( &class_get_parent ),      nullptr, false );
+        Resolve( hMod, "il2cpp_class_is_valuetype",     reinterpret_cast<void**>( &class_is_valuetype ),    nullptr, false );
+        Resolve( hMod, "il2cpp_class_is_interface",     reinterpret_cast<void**>( &class_is_interface ),    nullptr, false );
+        Resolve( hMod, "il2cpp_class_is_enum",          reinterpret_cast<void**>( &class_is_enum ),         nullptr, false );
+        Resolve( hMod, "il2cpp_class_get_interfaces",   reinterpret_cast<void**>( &class_get_interfaces ),  nullptr, false );
+        Resolve( hMod, "il2cpp_class_get_nested_types", reinterpret_cast<void**>( &class_get_nested_types ),nullptr, false );
+
+        // ---- Fields ----
+        Resolve( hMod, "il2cpp_class_num_fields",   reinterpret_cast<void**>( &class_num_fields ),  nullptr, false );
+        Resolve( hMod, "il2cpp_class_get_fields",   reinterpret_cast<void**>( &class_get_fields ),  nullptr, false );
+        Resolve( hMod, "il2cpp_field_get_name",     reinterpret_cast<void**>( &field_get_name ),    nullptr, false );
+        Resolve( hMod, "il2cpp_field_get_type",     reinterpret_cast<void**>( &field_get_type ),    nullptr, false );
+        Resolve( hMod, "il2cpp_field_get_flags",    reinterpret_cast<void**>( &field_get_flags ),   nullptr, false );
+        Resolve( hMod, "il2cpp_field_get_offset",   reinterpret_cast<void**>( &field_get_offset ),  nullptr, false );
+
+        // ---- Methods ----
+        Resolve( hMod, "il2cpp_class_get_methods",           reinterpret_cast<void**>( &class_get_methods ),          nullptr, false );
+        Resolve( hMod, "il2cpp_method_get_name",             reinterpret_cast<void**>( &method_get_name ),            nullptr, false );
+        Resolve( hMod, "il2cpp_method_get_flags",            reinterpret_cast<void**>( &method_get_flags ),           nullptr, false );
+        Resolve( hMod, "il2cpp_method_get_param_count",      reinterpret_cast<void**>( &method_get_param_count ),     nullptr, false );
+        Resolve( hMod, "il2cpp_method_get_param",            reinterpret_cast<void**>( &method_get_param ),           nullptr, false );
+        Resolve( hMod, "il2cpp_method_get_param_name",       reinterpret_cast<void**>( &method_get_param_name ),      nullptr, false );
+        Resolve( hMod, "il2cpp_method_get_return_type",      reinterpret_cast<void**>( &method_get_return_type ),     nullptr, false );
+        Resolve( hMod, "il2cpp_method_get_function_pointer", reinterpret_cast<void**>( &method_get_function_pointer ),nullptr, false );
+
+        // ---- Type / token ----
+        Resolve( hMod, "il2cpp_type_get_name",        reinterpret_cast<void**>( &type_get_name ),        nullptr, false );
+        Resolve( hMod, "il2cpp_class_get_type_token",  reinterpret_cast<void**>( &class_get_type_token ), nullptr, false );
+
+        // Validate required set
+        if ( !get_domain || !get_assemblies || !assembly_get_image ||
+             !image_get_name || !image_get_class_count || !image_get_class ) {
+            Log( "[ERROR] One or more required IL2CPP functions could not be resolved" );
+            return;
+        }
+
+        initialized = true;
+        Log( "[OK] IL2CPP API initialized" );
+        PrintResolveReport( );
+    }
+
+
+    //  PrintResolveReport
+    void PrintResolveReport( ) {
+        int resolved = 0, failed = 0;
+        for ( const auto & e : s_registry ) {
+            if ( e.how != ResolveMethod::None ) ++resolved; else ++failed;
+        }
+
+        Log( "" );
+        Log( "  Resolve Report: " + std::to_string( resolved ) +
+             " resolved, " + std::to_string( failed ) + " missing" );
+        Log( "  +---------------------------------+----------+" );
+        Log( "  | Function                        | Method   |" );
+        Log( "  +---------------------------------+----------+" );
+
+        for ( const auto & e : s_registry ) {
+            std::ostringstream row;
+            row << "  | "
+                << std::left << std::setw( 31 ) << std::string( e.exportName ).substr( 7 )  // strip "il2cpp_"
+                << " | "
+                << std::left << std::setw( 8 )  << ResolveName( e.how )
+                << " |";
+            Log( row.str( ) );
+        }
+
+        Log( "  +---------------------------------+----------+" );
+        Log( "" );
+    }
+
+} // namespace api

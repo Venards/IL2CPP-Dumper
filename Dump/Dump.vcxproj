@@ -23,6 +23,9 @@
     <ClInclude Include="include\il2cpp_api.hxx" />
     <ClInclude Include="include\il2cpp_class.hxx" />
     <ClInclude Include="include\il2cpp_image.hxx" />
+    <ClInclude Include="include\mem.hxx" />
+    <ClInclude Include="include\rva.hxx" />
+    <ClInclude Include="include\scanner.hxx" />
     <ClInclude Include="include\utils.hxx" />
   </ItemGroup>
   <ItemGroup>
@@ -31,6 +34,9 @@
     <ClCompile Include="src\il2cpp_class.cxx" />
     <ClCompile Include="src\il2cpp_image.cxx" />
     <ClCompile Include="src\main.cxx" />
+    <ClCompile Include="src\mem.cxx" />
+    <ClCompile Include="src\rva.cxx" />
+    <ClCompile Include="src\scanner.cxx" />
     <ClCompile Include="src\utils.cxx" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

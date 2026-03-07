@@ -6,34 +6,47 @@
 #include "../include/dumper.hxx"
 
 
-FILE * Startup( ) {
+static void SetupConsole( ) {
     AllocConsole( );
 
     FILE * fDummy = nullptr;
     freopen_s( &fDummy, "CONOUT$", "w", stdout );
-    freopen_s( &fDummy, "CONIN$", "r", stdin );
+    freopen_s( &fDummy, "CONIN$",  "r", stdin  );
 
-    SetConsoleTitleA( "IL2CPP Dumper - Press INSERT" );
+    // Enable ANSI escape codes in Windows 10+ console
+    HANDLE hOut = GetStdHandle( STD_OUTPUT_HANDLE );
+    if ( hOut != INVALID_HANDLE_VALUE ) {
+        DWORD mode = 0;
+        GetConsoleMode( hOut, &mode );
+        SetConsoleMode( hOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING );
+    }
 
-    return fDummy;
+    SetConsoleTitleA( "IL2CPP Dumper - @wg5h | Press INSERT to dump" );
 }
 
 
 DWORD WINAPI EntryPoint( LPVOID lpParam ) {
-    HMODULE hModule = ( HMODULE ) lpParam;
-    FILE * output = Startup( );
+    HMODULE hModule = reinterpret_cast<HMODULE>( lpParam );
 
-    Log( "DLL injected. Press INSERT to dump..." );
+    SetupConsole( );
+
+    Log( "=================================================" );
+    Log( "  IL2CPP Dumper - @wg5h" );
+    Log( "  Press INSERT to begin dump" );
+    Log( "=================================================" );
 
     while ( true ) {
         if ( GetAsyncKeyState( VK_INSERT ) & 0x8000 ) {
-            Log( "INSERT -> starting dump..." );
-            Sleep( 300 );
+            // Debounce: wait for key release before proceeding
+            while ( GetAsyncKeyState( VK_INSERT ) & 0x8000 ) Sleep( 10 );
+
+            Log( "" );
+            Log( "[>>>] Starting dump..." );
 
             Dumper dumper;
 
             if ( dumper.images.empty( ) ) {
-                Log( "[ERROR] No images/assemblies found" );
+                Log( "[ERROR] No assemblies found — dump aborted" );
             } else {
                 Log( "[OK] Found " + std::to_string( dumper.images.size( ) ) + " assemblies" );
                 dumper.DumpAllToFiles( );
@@ -45,24 +58,20 @@ DWORD WINAPI EntryPoint( LPVOID lpParam ) {
         Sleep( 50 );
     }
 
-    Log( "Dump finished." );
+    Log( "" );
+    Log( "Press ENTER to close..." );
     std::cin.get( );
 
-    if ( output ) fclose( output );
     FreeConsole( );
-
     FreeLibraryAndExitThread( hModule, 0 );
     return 0;
 }
 
 
 BOOL APIENTRY DllMain( HMODULE hModule, DWORD reason, LPVOID lpReserved ) {
-    switch ( reason ) {
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls( hModule );
-            CreateThread( nullptr, 0, EntryPoint, hModule, 0, nullptr );
-            break;
+    if ( reason == DLL_PROCESS_ATTACH ) {
+        DisableThreadLibraryCalls( hModule );
+        CreateThread( nullptr, 0, EntryPoint, hModule, 0, nullptr );
     }
-
     return TRUE;
 }
